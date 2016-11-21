@@ -1,0 +1,19 @@
+{
+  "name": "gitbook-plugin-gen-all",
+  "version": "1.0.0",
+  "description": "GitBook plugin to generate pages not in the summary",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "gitbook": ">3.0.0"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^1.0.0",
+    "glob": "^7.1.1",
+    "immutable": "^3.8.1"
+  }
+}
