@@ -1,12 +1,16 @@
 var glob = require('glob');
 var fs = require('fs-extra');
 var path = require('path');
+var url = require('url');
 var Immutable = require('immutable');
+var cheerio = require('cheerio');
+
 
 var Page = Immutable.Record({
   path: String(),
   basename: String(),
   title: String(),
+  inboundLinks: Immutable.Set()
 });
 
 Page.prototype.getBasename = function() {
@@ -42,6 +46,16 @@ PageIndex.addPage = function(indexGroups, page) {
   }
   indexGroups[initial][page.getPath()] = page;
 };
+
+PageIndex.allPages = function(indexGroups) {
+  var pages = {};
+  Object.values(indexGroups).forEach(function(groupPages) {
+    Object.values(groupPages).forEach(function(page) {
+      pages[page.getPath()] = page;
+    });
+  });
+  return pages;
+}
 
 PageIndex.sortedInitials = function(indexGroups) {
   return Object.keys(indexGroups).sort(function(a, b) {
@@ -81,7 +95,7 @@ DirectoryIndex.addPage = function(directoryGroups, page) {
     } else {
       directoryGroups[dir.pardir].dirs[dir.subdir] = {
         subdir: dir.subdir,
-        index: path.join(dir.pardir, dir.subdir, '_index.md')
+        index: path.join(dir.subdir, '_index.md')
       };
     }
   });
@@ -112,13 +126,15 @@ DirectoryIndex.indexPagesFor = function(page) {
   })
 };
 
+var pagesStore;
+
 // TODO: need to generate summary before gitbook build
 module.exports = {
   // Map of hooks
   hooks: {
     config: function(config) {
-      var indexGroups = {},
-          directoryGroups = {},
+      var indexGroups = {}, // initial: {path: Page}
+          directoryGroups = {}, // dir: {pages: [], dirs: {subdir: dir}}
           root = '.';
 
       if (config.root) {
@@ -189,12 +205,15 @@ module.exports = {
       } finally {
         fs.closeSync(fd);
       }
+      pagesStore = PageIndex.allPages(indexGroups);
       return config;
     },
     "page:before": function(page) {
+      // don't generate breadcrumbs for readme
       if (page.path === this.config.get('structure.readme')) {
         return page;
       }
+      // generated breadcrumbs
       var crumbs = [{
         path: this.config.get('structure.readme'),
         title: 'Top'
@@ -203,6 +222,7 @@ module.exports = {
       var isIndex = path.basename(page.path) === '_index.md';
       var leaf = dirs.pop();
       if (isIndex) {
+        // pop twice to account for _index.md
         leaf = dirs.pop();
       }
       dirs.forEach(function(dir, i) {
@@ -220,10 +240,61 @@ module.exports = {
       } else {
         links.push(path.basename(page.path));
       }
-      var crumbline = links.join(' > ')
-      console.log(page.path, crumbs);
+      var crumbline = links.join(' > ');
       page.content = crumbline + '\n\n' + page.content;
       return page;
+    },
+    "page": function(page) {
+      var absReadmePath = path.resolve('/', this.config.get('structure.readme'));
+      // for each link, add to target's inboundLinks
+      // if target is not found, add to broken links
+      var $ = cheerio.load(page.content);
+        if (page.path === 'checklists/_index.md') {
+          console.log('checklists/_index.md')
+        }
+      $('a').each(function(i, el) {
+        var href = $(el).attr('href');
+        if (typeof href === 'undefined') return; //some empty link
+
+        var target = url.parse(href);
+        if (target.host !== null) return; // external link
+        if (target.path === null) return; // probably just fragment
+
+        var absTargetPath = path.resolve('/', path.dirname(page.path), target.path);
+        if (absTargetPath === absReadmePath) return; // readme
+
+        var relTargetPath = absTargetPath.substring(1);
+        var maybeIndexPath = path.join(relTargetPath, '_index.md');
+
+        if (page.path === 'checklists/_index.md') {
+          console.log(relTargetPath)
+        }
+        var pageJson = null;
+        if (pagesStore.hasOwnProperty(maybeIndexPath)) {
+          targetPage = pagesStore[maybeIndexPath];
+        } else if (pagesStore.hasOwnProperty(relTargetPath)) {
+          targetPage = pagesStore[relTargetPath];
+        } else {
+          console.log('WARN', 'broken link in', page.path, relTargetPath);
+        }
+        if (targetPage !== null) {
+          pagesStore[relTargetPath] = targetPage.set('inboundLinks', targetPage.inboundLinks.add(page.path));
+        }
+      });
+      console.log(page.path);
+      return page;
+    },
+    "finish": function() {
+      Object.keys(pagesStore).sort().forEach(function(path) {
+        var page = pagesStore[path];
+        if (page.inboundLinks.size === 0) {
+          if (path.basename(page.path) === '_index.md') {
+            console.log('WARN', 'orphaned directory', path.dirname(page.path));
+          } else {
+            console.log('WARN', 'orphaned page', page.path);
+          }
+        }
+      });
     }
   },
 
