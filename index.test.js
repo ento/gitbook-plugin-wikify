@@ -1,12 +1,17 @@
 import test from 'ava';
-import fs from 'fs-extra';
-import uniqueTempDir from 'unique-temp-dir';
-import {execFile} from 'child_process';
-import pify from 'pify';
+import tester from 'gitbook-tester';
 
-const touch = (path) => {
-  fs.closeSync(fs.openSync(path, 'w'));
-};
+const builder = () => {
+  return tester.builder()
+        .withLocalPlugin(__dirname)
+}
+
+test.only("page: doesn't create breadcrumbs for readme", async t => {
+  const result = await builder()
+        .withContent('Intro')
+        .create();
+  t.is(result.get('index.html').$('nav.wiki-breadcrumbs').length, 0);
+});
 
 test.todo('page: creates breadcrumbs');
 test.todo('page: creates breadcrumb for readme in a non-cwd root');

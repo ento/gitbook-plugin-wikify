@@ -24,7 +24,7 @@ const tapLogger = function(gitbookLogger) {
 module.exports = {
   // Map of hooks
   hooks: {
-    config: function(config) {
+    init: function() {
       this.summary.walk(article => {
         console.log(article);
       })
@@ -49,7 +49,7 @@ module.exports = {
               }
             });
       const crumbline = links.join(' > ');
-      page.content = crumbline + '\n\n' + page.content;
+      page.content = '<nav class="wiki-breadcrumbs">' + crumbline + '</nav>\n\n' + page.content;
       return page;
     },
 
@@ -92,6 +92,7 @@ module.exports = {
 
     "finish": function() {
       const tap = tapLogger(this.log);
+      return;
       PageIndex.forEach(pageIndex, page => {
         if (page.inboundLinks.size === 0) {
           tap.test({description: 'orphaned: ' + page.path});
