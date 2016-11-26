@@ -7,7 +7,6 @@ const cheerio = require('cheerio');
 const testAnythingProtocol = require('test-anything-protocol');
 
 const PageIndex = require('./page_index');
-const Wiki = require('./wiki');
 const Breadcrumbs = require('./breadcrumbs');
 
 
@@ -21,8 +20,6 @@ const tapLogger = function(gitbookLogger) {
   })
 }
 
-let wiki;
-
 // TODO: need to generate summary before gitbook build
 module.exports = {
   // Map of hooks
@@ -31,24 +28,7 @@ module.exports = {
       this.summary.walk(article => {
         console.log(article);
       })
-      return;
-      let root = '.';
-
-      if (config.root) {
-        root = config.root;
-      }
-
-      Wiki
-        .index(root)
-        .then(wiki => {
-          return Wiki.generateIndexPages(wiki);
-        })
-        .then(wiki => {
-          Wiki.generateSummaryPage(wiki);
-          return config;
-        });
     },
-
     "page:before": function(page) {
       if (page.path === this.config.get('structure.readme')) {
         return page;

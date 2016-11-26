@@ -55,7 +55,10 @@ module.exports = class Wiki {
             // autogenerate an index
             return Wiki.generateIndexPage(wiki, dir, generatedIndexFile);
           });
-      }));
+      }))
+      .then(() => {
+        return wiki;
+      });
   }
 
   /* generate dirname/_index.md for a specific directory */
