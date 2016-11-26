@@ -35,7 +35,12 @@ const main = (argv) => {
         const book = gitbook.Book.createForFS(fs);
         book.setLogLevel(logLevel);
 
-        return autoindex(book.getContentRoot());
+        return gitbook.Parse.parseIgnore(book)
+          .then(gitbook.Parse.parseConfig)
+          .then(book => {
+            console.log(book.getContentRoot());
+            return autoindex(book.getContentRoot());
+          });
       })
   );
 }
