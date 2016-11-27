@@ -1,15 +1,15 @@
 'use strict';
-const fs = require('fs');
 const path = require('path');
-const pify = require('pify');
-const glob = require('glob');
+const Promise = require('bluebird');
+const fs = Promise.promisifyAll(require('fs-extra'));
+const glob = Promise.promisify(require('glob'));
 
 const DirectoryIndex = require('./directory_index');
 const PageIndex = require('./page_index');
 const Page = require('./page');
 
 
-module.exports = class Wiki {
+class Wiki {
   constructor (root, pageIndex, directoryIndex) {
     this.root = root;
     this.pageIndex = pageIndex;
@@ -24,7 +24,7 @@ module.exports = class Wiki {
       ignore: ['node_modules/**/*.md', 'SUMMARY.md', '_index.md', '**/_index.md']
     };
 
-    return pify(glob)('**/*.md', globOptions)
+    return glob('**/*.md', globOptions)
       .then(files => {
         files.forEach(filepath => {
           const page = new Page(filepath, filepath);
@@ -46,10 +46,10 @@ module.exports = class Wiki {
         const resolvedDir = path.join(wiki.root, dir.path),
               sourceIndexFile = path.join(resolvedDir, 'index.md'),
               generatedIndexFile = path.join(resolvedDir, '_index.md');
-        return pify(fs.access)(sourceIndexFile, 'r')
+        return fs.accessAsync(sourceIndexFile, 'r')
           .then(() => {
             // copy index.md as-is if exists
-            return pify(fs.copy)(sourceIndexFile, generatedIndexFile);
+            return fs.copyAsync(sourceIndexFile, generatedIndexFile);
           })
           .catch(() => {
             // autogenerate an index
@@ -63,15 +63,14 @@ module.exports = class Wiki {
 
   /* generate dirname/_index.md for a specific directory */
   static generateIndexPage(wiki, forDirectory, resolvedIndexPath) {
-    return pify(fs.open)(resolvedIndexPath, 'w')
-      .then(fd => {
+    return Promise.using(open(resolvedIndexPath, 'w'), fd => {
         // title
-        return pify(fs.write)(fd, '# ' + forDirectory.path + '\n')
+        return fs.writeAsync(fd, '# ' + forDirectory.path + '\n')
           .then(() => {
             // directories
             return Array.from(forDirectory.dirs).sort().reduce(function(promise, basename) {
               return promise.then(() => {
-                return pify(fs.write)(fd, '- [' + basename + '](./' + basename + '/_index.md)\n')
+                return fs.writeAsync(fd, '- [' + basename + '](./' + basename + '/_index.md)\n')
               });;
             }, Promise.resolve());
           })
@@ -79,30 +78,44 @@ module.exports = class Wiki {
             // pages
             return Array.from(forDirectory.pages).sort().reduce(function(promise, basename) {
               return promise.then(() => {
-                return pify(fs.write)(fd, '- [' + basename + '](./' + basename + ')\n');
+                return fs.writeAsync(fd, '- [' + basename + '](./' + basename + ')\n');
               });
             }, Promise.resolve());
-          })
+          });
+      })
+      .then(() => {
+        return wiki;
       });
   }
 
   /* generate SUMMARY.md */
   static generateSummaryPage(wiki) {
-    return pify(fs.open)(path.join(wiki.root, 'SUMMARY.md'), 'w')
-      .then(fd => {
-        const titlePromise = pify(fs.write)(fd, '# Index\n');
+    return Promise.using(open(path.resolve(wiki.root, 'SUMMARY.md'), 'w'), fd => {
+        const titlePromise = fs.writeAsync(fd, '# Index\n');
         return PageIndex.sortedInitials(wiki.pageIndex)
           .reduce((promise, initial) => {
             const initialPromise = promise.then(() => {
-              return pify(fs.write)(fd, '\n### ' + initial + '\n');
+              return fs.writeAsync(fd, '\n### ' + initial + '\n');
             });
             return PageIndex.sortPagesAt(wiki.pageIndex, initial)
               .reduce((promise, page) => {
                 return promise.then(() => {
-                  return pify(fs.write)(fd, '- [' + page.title + '](' + page.path + ')\n');
+                  return fs.writeAsync(fd, '- [' + page.title + '](' + page.path + ')\n');
                 });
               }, initialPromise);
           }, titlePromise);
+      })
+      .then(() => {
+        return wiki;
       });
   }
 };
+
+const open = function() {
+  return fs.openAsync.apply(fs, arguments).disposer(fd => {
+    return fs.closeAsync(fd)
+      .catch(() => {});
+  });
+}
+
+module.exports = Wiki;

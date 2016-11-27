@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 'use strict';
 
+const path = require('path');
 const _ = require('lodash');
 const yargs = require('yargs');
 const color = require('bash-color');
@@ -22,7 +23,7 @@ const runPromise = (p) => {
 }
 
 const main = (argv) => {
-  const bookRoot = argv._[0] || process.cwd();
+  const bookRoot = path.resolve(argv._[0] || process.cwd());
   const args = argv._.slice(0);
   const kwargs = _.omit(argv, '$0', '_');
 
@@ -38,7 +39,6 @@ const main = (argv) => {
         return gitbook.Parse.parseIgnore(book)
           .then(gitbook.Parse.parseConfig)
           .then(book => {
-            console.log(book.getContentRoot());
             return autoindex(book.getContentRoot());
           });
       })

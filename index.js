@@ -20,7 +20,6 @@ const tapLogger = function(gitbookLogger) {
   })
 }
 
-// TODO: need to generate summary before gitbook build
 module.exports = {
   // Map of hooks
   hooks: {
@@ -29,31 +28,12 @@ module.exports = {
         console.log(article);
       })
     },
-    "page:before": function(page) {
-      if (page.path === this.config.get('structure.readme')) {
-        return page;
-      }
-      // generate breadcrumbs
-      const crumbs = [{
-        path: this.config.get('structure.readme'),
-        title: 'Top',
-        link: true
-      }];
-      const links = crumbs
-            .concat(Breadcrumbs.crumbsFor(page.path))
-            .map(function(crumb) {
-              if (crumb.link) {
-                return '[' + crumb.title + '](/' + crumb.path + ')';
-              } else {
-                return crumb.title;
-              }
-            });
-      const crumbline = links.join(' > ');
-      page.content = '<nav class="wiki-breadcrumbs">' + crumbline + '</nav>\n\n' + page.content;
-      return page;
-    },
 
     "page": function(page) {
+      if (page.path !== this.config.get('structure.readme')) {
+        Breadcrumbs.addBreadcrumbs(page, 'Top', this.config.get('structure.readme'));
+      }
+      return page;
       const tap = tapLogger(this.log);
       const absReadmePath = path.resolve('/', this.config.get('structure.readme'));
       // for each link, add to target's inboundLinks

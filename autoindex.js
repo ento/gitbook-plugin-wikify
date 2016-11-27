@@ -1,13 +1,13 @@
 'use strict';
 const Wiki = require('./wiki');
 
-module.exports = (root) => {
+module.exports = (contentRoot) => {
   return Wiki
-    .index(root)
+    .index(contentRoot)
     .then(wiki => {
       return Wiki.generateIndexPages(wiki);
     })
     .then(wiki => {
-      Wiki.generateSummaryPage(wiki);
+      return Wiki.generateSummaryPage(wiki);
     });
 };
