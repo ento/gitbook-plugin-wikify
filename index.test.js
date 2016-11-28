@@ -58,7 +58,18 @@ test('page: creates breadcrumb pointing at readme in a non-cwd root', async t =>
   t.is($crumbs.find('.wiki-breadcrumbs-static').eq(0).text(), 'hello.md');
 });
 
-test.todo('page: replaces link to a directory with a link to its index page');
+test.only('page: replaces link to a directory with a link to its index page', async t => {
+  const result = await builder()
+        .withContent('[a](a)')
+        .withPage('a/hello', '[world](.)')
+        .withBookJson({root: 'book'})
+        .beforeBuild(path.join(__dirname, 'bin', 'gitbook-autoindex.js'), ['.'])
+        .create();
+  t.is(result.get('index.html').$('a').attr('href'),
+       'a/_index.html');
+  t.is(result.get('a/hello.html').$('a:not(.wiki-breadcrumbs-link)').attr('href'),
+       '_index.html');
+});
 
 // linkchecker
 test.todo('page: reports page as ok if no broken link');

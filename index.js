@@ -3,11 +3,13 @@
 const fs = require('fs-extra');
 const path = require('path');
 const url = require('url');
+const Promise = require('bluebird');
 const cheerio = require('cheerio');
 const testAnythingProtocol = require('test-anything-protocol');
 
 const PageIndex = require('./page_index');
 const Breadcrumbs = require('./breadcrumbs');
+const DirectoryLinks = require('./directory_links');
 
 
 const tapLogger = function(gitbookLogger) {
@@ -20,20 +22,29 @@ const tapLogger = function(gitbookLogger) {
   })
 }
 
+const pages = new Set();
+
 module.exports = {
   // Map of hooks
   hooks: {
     init: function() {
       this.summary.walk(article => {
+        pages.add(article.path);
         console.log(article);
-      })
+      });
     },
 
     "page": function(page) {
       if (page.path !== this.config.get('structure.readme')) {
         Breadcrumbs.addBreadcrumbs(page, 'Top', this.config.get('structure.readme'));
       }
-      return page;
+
+      return DirectoryLinks
+        .loadLocationUtils(this.gitbook.version)
+        .then(locationUtils => {
+          return DirectoryLinks.rewrite(locationUtils, pages, page);
+        });
+
       const tap = tapLogger(this.log);
       const absReadmePath = path.resolve('/', this.config.get('structure.readme'));
       // for each link, add to target's inboundLinks
