@@ -4,7 +4,7 @@ const Directory = require("./directory");
 
 module.exports = class DirectoryIndex {
   constructor () {
-    // path: {path, pages: Set<basename>, dirs: Set<basename>}
+    // {path: Directory}
   }
 
   static addPage(directoryIndex, page) {
