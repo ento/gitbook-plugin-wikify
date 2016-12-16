@@ -4,7 +4,6 @@ const url = require('url');
 const cheerio = require('cheerio');
 const Promise = require('bluebird');
 const glob = Promise.promisify(require('glob'));
-const gitbookLocal = require('gitbook-cli/lib/local');
 const Directory = require('./directory');
 
 
@@ -18,13 +17,6 @@ class DirectoryLinks {
     return glob('**/_index.md', globOptions)
       .then(files => {
         return new Set(files);
-      });
-  }
-
-  static loadLocationUtils(gitbookVersion) {
-    return gitbookLocal.resolve(gitbookVersion)
-      .then(resolved => {
-        return require(path.join(resolved.path, 'lib', 'utils', 'location'));
       });
   }
 

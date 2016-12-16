@@ -21,11 +21,14 @@
     "lodash": "^4.17.2",
     "optimist": "^0.6.1",
     "test-anything-protocol": "^0.1.0",
+    "textlint-formatter": "^1.8.0",
     "yargs": "^6.4.0"
   },
   "devDependencies": {
     "ava": "^0.17.0",
     "gitbook-tester": "^1.4.3",
-    "unique-temp-dir": "^1.0.0"
+    "tap-parser": "^3.0.4",
+    "unique-temp-dir": "^1.0.0",
+    "winston-memory": "^0.1.0"
   }
 }

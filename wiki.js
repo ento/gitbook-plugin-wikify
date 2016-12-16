@@ -1,12 +1,13 @@
 'use strict';
 const path = require('path');
 const Promise = require('bluebird');
-const fs = Promise.promisifyAll(require('fs-extra'));
 const glob = Promise.promisify(require('glob'));
 
 const DirectoryIndex = require('./directory_index');
 const PageIndex = require('./page_index');
 const Page = require('./page');
+const open = require('./asyncfs').open;
+const fs = require('./asyncfs').fs;
 
 
 class Wiki {
@@ -16,7 +17,7 @@ class Wiki {
     this.directoryIndex = directoryIndex;
   }
 
-  static index(root) {
+  static index(root, isFileIgnored) {
     const pageIndex = new PageIndex();
     const directoryIndex = new DirectoryIndex();
     const globOptions = {
@@ -27,6 +28,10 @@ class Wiki {
     return glob('**/*.md', globOptions)
       .then(files => {
         files.forEach(filepath => {
+          if (typeof isFileIgnored === 'function' && isFileIgnored(filepath)) {
+            return;
+          }
+
           const page = new Page(filepath, filepath);
 
           PageIndex.addPage(pageIndex, page);
@@ -42,8 +47,8 @@ class Wiki {
   /* generate dirname/_index.md for all known directories */
   static generateIndexPages(wiki) {
     return Promise.all(
-      Object.values(wiki.directoryIndex).map(function(dir) {
-        const resolvedDir = path.join(wiki.root, dir.path),
+      Object.keys(wiki.directoryIndex).map(function(dirPath) {
+        const resolvedDir = path.join(wiki.root, dirPath),
               sourceIndexFile = path.join(resolvedDir, 'index.md'),
               generatedIndexFile = path.join(resolvedDir, '_index.md');
         return fs.accessAsync(sourceIndexFile, 'r')
@@ -53,7 +58,7 @@ class Wiki {
           })
           .catch(() => {
             // autogenerate an index
-            return Wiki.generateIndexPage(wiki, dir, generatedIndexFile);
+            return Wiki.generateIndexPage(wiki, wiki.directoryIndex[dirPath], generatedIndexFile);
           });
       }))
       .then(() => {
@@ -110,12 +115,5 @@ class Wiki {
       });
   }
 };
-
-const open = function() {
-  return fs.openAsync.apply(fs, arguments).disposer(fd => {
-    return fs.closeAsync(fd)
-      .catch(() => {});
-  });
-}
 
 module.exports = Wiki;

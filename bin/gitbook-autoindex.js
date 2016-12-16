@@ -24,7 +24,6 @@ const runPromise = (p) => {
 
 const main = (argv) => {
   const bookRoot = path.resolve(argv._[0] || process.cwd());
-  const args = argv._.slice(0);
   const kwargs = _.omit(argv, '$0', '_');
 
   runPromise(
@@ -39,7 +38,7 @@ const main = (argv) => {
         return gitbook.Parse.parseIgnore(book)
           .then(gitbook.Parse.parseConfig)
           .then(book => {
-            return autoindex(book.getContentRoot());
+            return autoindex(book.getContentRoot(), book.isFileIgnored.bind(book));
           });
       })
   );
@@ -51,7 +50,7 @@ manager.init();
 yargs
   .usage('Usage: $0 [book-root] [options]')
   .alias('v', 'gitbook')
-  .nargs('gitbook', 10)
+  .nargs('gitbook', 1)
   .describe('gitbook', 'specify GitBook version to use')
   .alias('d', 'debug')
   .boolean('debug')

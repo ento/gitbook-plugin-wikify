@@ -53,7 +53,9 @@ module.exports = class PageIndex {
   }
 
   static sortPagesAt(pageIndex, initial) {
-    return PageIndex.sortPages(Object.values(pageIndex.byInitial[initial]));
+    return PageIndex.sortPages(Object.keys(pageIndex.byInitial[initial]).map(path => {
+      return pageIndex.byInitial[initial][path];
+    }));
   }
 
   static sortPages(pages) {

@@ -1,10 +1,10 @@
 import test from 'ava';
 import cheerio from 'cheerio';
 import DirectoryLinks from './directory_links';
+import loadLocationUtils from './load_location_utils';
 
 const defaultGitbookVersion = '3.1.1';
-const locationUtilsPromise = DirectoryLinks
-      .loadLocationUtils(process.env.GITBOOK_VERSION || defaultGitbookVersion);
+const locationUtilsPromise = loadLocationUtils(process.env.GITBOOK_VERSION || defaultGitbookVersion);
 
 const rewrite = (pages, page) => {
   return locationUtilsPromise
@@ -16,7 +16,7 @@ const rewrite = (pages, page) => {
     });
 };
 
-test('.rewrite sub directory to _index.md', async t => {
+test('.rewrite relative sub directory to _index.md', async t => {
   const pages = new Set(['a/_index.md']);
   const page = {
     path: 'hello.md',
@@ -26,7 +26,7 @@ test('.rewrite sub directory to _index.md', async t => {
   t.is($('a').attr('href'), 'a/_index.md');
 });
 
-test('.rewrite absolute directory to _index.md', async t => {
+test('.rewrite absolute sub directory to _index.md', async t => {
   const pages = new Set(['a/_index.md']);
   const page = {
     path: 'hello.md',
@@ -36,11 +36,21 @@ test('.rewrite absolute directory to _index.md', async t => {
   t.is($('a').attr('href'), 'a/_index.md');
 });
 
-test('.rewrite parent directory to _index.md', async t => {
+test('.rewrite relative parent directory to _index.md', async t => {
   const pages = new Set(['a/_index.md']);
   const page = {
     path: 'a/hello.md',
     content: '<a href="../a">world</a>'
+  };
+  const $ = await rewrite(pages, page);
+  t.is($('a').attr('href'), '_index.md');
+});
+
+test('.rewrite relative self directory to _index.md', async t => {
+  const pages = new Set(['a/_index.md']);
+  const page = {
+    path: 'a/hello.md',
+    content: '<a href=".">world</a>'
   };
   const $ = await rewrite(pages, page);
   t.is($('a').attr('href'), '_index.md');

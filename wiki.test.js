@@ -16,10 +16,11 @@ const isEmpty = (t, wiki) => {
   t.is(Object.keys(wiki.directoryIndex).length, 0);
 };
 
+
 test('.index ignores _index.md', async t => {
   const root = uniqueTempDir({create: true, thunk: true});
   touch(root('_index.md'));
-  var wiki = await Wiki.index(root());
+  const wiki = await Wiki.index(root());
   isEmpty(t, wiki);
 });
 
@@ -27,14 +28,23 @@ test('.index ignores node_modules', async t => {
   const root = uniqueTempDir({create: true, thunk: true});
   fs.ensureDirSync(root('node_modules'));
   touch(root('node_modules/hello.md'));
-  var wiki = await Wiki.index(root());
+  const wiki = await Wiki.index(root());
   isEmpty(t, wiki);
 });
 
 test('.index ignores SUMMARY.md', async t => {
   const root = uniqueTempDir({create: true, thunk: true});
   touch(root('SUMMARY.md'));
-  var wiki = await Wiki.index(root());
+  const wiki = await Wiki.index(root());
+  isEmpty(t, wiki);
+});
+
+test('.index ignores based on isFileIgnored', async t => {
+  const root = uniqueTempDir({create: true, thunk: true});
+  touch(root('hello.md'));
+  const wiki = await Wiki.index(root(), filename => {
+    return true;
+  });
   isEmpty(t, wiki);
 });
 
@@ -42,7 +52,7 @@ test('.index adds root pages', async t => {
   const root = uniqueTempDir({create: true, thunk: true});
   touch(root('hello.md'));
   touch(root('world.md'));
-  var wiki = await Wiki.index(root());
+  const wiki = await Wiki.index(root());
   t.is(Object.keys(wiki.pageIndex.byPath).length, 2);
   t.is(Object.keys(wiki.pageIndex.byInitial).length, 2);
   t.deepEqual(wiki.pageIndex.byPath['hello.md'], new Page('hello.md', 'hello.md'));

@@ -1,16 +1,17 @@
 'use strict';
 
-const fs = require('fs-extra');
 const path = require('path');
-const url = require('url');
-const Promise = require('bluebird');
-const cheerio = require('cheerio');
 const testAnythingProtocol = require('test-anything-protocol');
+const textlintFormatter = require("textlint-formatter");
+const Promise = require('bluebird');
+const open = require('./asyncfs').open;
+const fs = require('./asyncfs').fs;
 
 const PageIndex = require('./page_index');
 const Breadcrumbs = require('./breadcrumbs');
 const DirectoryLinks = require('./directory_links');
-
+const PageLinks = require('./page_links');
+const loadLocationUtils = require('./load_location_utils');
 
 const tapLogger = function(gitbookLogger) {
   return testAnythingProtocol(function(err, message) {
@@ -23,6 +24,31 @@ const tapLogger = function(gitbookLogger) {
 }
 
 const pages = new Set();
+const inboundLinks = {};
+
+function addInboundLink(sourcePath, targetPath) {
+  if (!inboundLinks.hasOwnProperty(targetPath)) {
+    inboundLinks[targetPath] = new Set();
+  }
+  inboundLinks[targetPath].add(sourcePath);
+}
+
+function processPageLinks(locationUtils, tap, readmePath, pages, page) {
+  const links = PageLinks.findGoodAndBadLinks(locationUtils, pages, page);
+  // for each link, add to target's inboundLinks
+  links.good.forEach(targetPath => {
+    if (targetPath === readmePath) {
+      return;
+    }
+    addInboundLink(page.path, targetPath);
+  });
+  // report bad links
+  if (links.bad.length === 0) {
+    tap.test({ok: true, description: 'links ok in ' + page.path});
+  } else {
+    tap.test({description: 'link broken in ' + page.path + ' -> ' + links.bad.join(', ')});
+  }
+}
 
 module.exports = {
   // Map of hooks
@@ -30,67 +56,49 @@ module.exports = {
     init: function() {
       this.summary.walk(article => {
         pages.add(article.path);
-        console.log(article);
       });
     },
 
     "page": function(page) {
-      if (page.path !== this.config.get('structure.readme')) {
-        Breadcrumbs.addBreadcrumbs(page, 'Top', this.config.get('structure.readme'));
-      }
+      const logger = this.log;
+      const readmePath = this.config.get('structure.readme');
+      const tap = tapLogger(logger);
 
-      return DirectoryLinks
-        .loadLocationUtils(this.gitbook.version)
+      return loadLocationUtils(this.gitbook.version)
         .then(locationUtils => {
-          return DirectoryLinks.rewrite(locationUtils, pages, page);
+          DirectoryLinks.rewrite(locationUtils, pages, page);
+          processPageLinks(locationUtils, tap, readmePath, pages, page);
+          if (page.path !== readmePath) {
+            Breadcrumbs.addBreadcrumbs(page, 'Top', readmePath);
+          }
+          return page;
         });
-
-      const tap = tapLogger(this.log);
-      const absReadmePath = path.resolve('/', this.config.get('structure.readme'));
-      // for each link, add to target's inboundLinks
-      // if target is not found, report as broken links
-      const $ = cheerio.load(page.content);
-      $('a').each(function(i, el) {
-        const href = $(el).attr('href');
-        if (typeof href === 'undefined') return; //some empty link
-
-        const target = url.parse(href);
-        if (target.host !== null) return; // external link
-        if (target.path === null) return; // probably just fragment
-
-        const absTargetPath = path.resolve('/', path.dirname(page.path), target.path);
-        if (absTargetPath === absReadmePath) return; // readme
-
-        const relTargetPath = absTargetPath.substring(1);
-        // TODO: wiki: rewrite directory link to _index.md link in page:before
-        const maybeIndexPath = path.join(relTargetPath, '_index.md');
-
-        if (PageIndex.hasPath(pageIndex, maybeIndexPath)) {
-          targetPage = PageIndex.getByPath(pageIndex, maybeIndexPath);
-        } else if (PageIndex.hasPage(pageIndex, relTargetPath)) {
-          targetPage = PageIndex.getByPath(pageIndex, relTargetPath);
-        }
-        if (targetPage === null) {
-          tap.test({description: 'link broken in ' + page.path + ' -> ' + relTargetPath});
-        } else {
-          targetPage.inboundLinks.add(page.path);
-          tap.test({ok: true, description: 'link ok in ' + page.path + ' -> ' + relTargetPath});
-        }
-      });
-      this.log.info.ok(page.path);
-      return page;
     },
 
     "finish": function() {
+      // number of pages checked for broken links
       const tap = tapLogger(this.log);
-      return;
-      PageIndex.forEach(pageIndex, page => {
-        if (page.inboundLinks.size === 0) {
-          tap.test({description: 'orphaned: ' + page.path});
-        } else {
-          tap.test({ok: true, description: 'page is discoverable: ' + page.path});
-        }
-      });
+      tap.plan(pages.size);
+
+      const lintOutputPath = this.config.get('pluginsConfig.gen-all.lintOutput')
+      if (typeof lintOutputPath === 'string') {
+        const readmePath = this.config.get('structure.readme');
+        const lintMessages = Array.from(pages).map(path => {
+          if (path === readmePath) return;
+          const pageInbounds = inboundLinks[path];
+          if (typeof pageInbounds === 'undefined' || pageInbounds.size === 0) {
+            return {
+              filePath: path,
+              messages: [
+                {message: 'orphaned', source: path, line: 1, column: 1}
+              ]
+            };
+          }
+        }).filter(Boolean);
+        const formatter = textlintFormatter({formatterName: 'jslint-xml'});
+        const lintOutput = formatter(lintMessages);
+        return fs.writeFileAsync(lintOutputPath, lintOutput);
+      }
     }
   }
 };

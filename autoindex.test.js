@@ -35,6 +35,18 @@ test('cli: creates summary page under a non-cwd root set by book.json', async t 
   t.truthy(fs.existsSync(root('a/SUMMARY.md')), outputs);
 });
 
+test('cli: ignores _book', async t => {
+  const root = uniqueTempDir({create: true, thunk: true});
+  fs.ensureDirSync(root('_book'));
+  touch(root('_book/hello.md'));
+  const summary = await execFile(
+    './bin/gitbook-autoindex.js', [root(), '--debug'])
+        .then(() => {
+          return fs.readFileSync(root('SUMMARY.md'), 'utf-8');
+        });
+  t.notRegex(summary, /_book/);
+});
+
 test('cli: creates index pages', async t => {
   const root = uniqueTempDir({create: true, thunk: true});
   fs.ensureDirSync(root('a'));
