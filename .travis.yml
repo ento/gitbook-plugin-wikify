@@ -15,7 +15,7 @@ before_install:
   - npm install -g gitbook-cli
   - gitbook fetch $GITBOOK_VERSION
 script:
-  - npm test
+  - DEBUG=true npm test
   - npm run lint
 notifications:
   email: false
