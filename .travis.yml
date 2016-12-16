@@ -4,7 +4,11 @@ node_js:
   # should match gitbook's node_js list
   - "stable"
   - "4.1"
-before_script:
-  - gitbook install
+env:
+  - GITBOOK_VERSION=3.1.1
+  - GITBOOK_VERSION=
+before_install:
+  - npm install -g gitbook-cli
+  - gitbook fetch $GITBOOK_VERSION
 after_success:
   - npm run lint
