@@ -1,16 +1,23 @@
 {
-  "name": "gitbook-plugin-gen-all",
+  "name": "gitbook-plugin-wikify",
   "version": "1.0.0",
-  "description": "GitBook plugin to generate pages not in the summary",
+  "description": "GitBook plugin that makes your book wiki-like",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ento/gitbook-plugin-wikify.git"
+  },
   "main": "index.js",
+  "bin": {
+    "gitbook-autoindex": "./bin/gitbook-autoindex.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava"
   },
   "engines": {
     "gitbook": ">3.0.0"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Marica Odagaki",
+  "license": "BSD-3-Clause",
   "dependencies": {
     "bash-color": "0.0.4",
     "bluebird": "^3.4.6",
@@ -30,5 +37,14 @@
     "tap-parser": "^3.0.4",
     "unique-temp-dir": "^1.0.0",
     "winston-memory": "^0.1.0"
+  },
+  "gitbook": {
+    "properties": {
+      "lintOutput": {
+        "type": "string",
+        "default": null,
+        "description": ""
+      }
+    }
   }
 }

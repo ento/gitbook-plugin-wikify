@@ -23,11 +23,11 @@ class Breadcrumbs {
     page: {path, content}
    */
   static addBreadcrumbs(page, topTitle, topPath) {
-    const $crumbs = cheerio('<nav>').addClass('wiki-breadcrumbs');
+    const $crumbs = cheerio('<nav>').addClass('wikify-breadcrumbs');
     $crumbs.append(createCrumb(topTitle, topPath));
     Breadcrumbs.crumbsFor(page.path)
       .forEach(function(crumb) {
-        $crumbs.append(cheerio('<span>').addClass('wiki-breadcrumbs-sep').text(' > '));
+        $crumbs.append(cheerio('<span>').addClass('wikify-breadcrumbs-sep').text(' > '));
         $crumbs.append(createCrumb(crumb.title, crumb.path));
       });
 
@@ -38,11 +38,11 @@ class Breadcrumbs {
 const createCrumb = (title, pagePath) => {
   if (pagePath !== undefined) {
     return cheerio('<a>')
-      .addClass('wiki-breadcrumbs-link')
+      .addClass('wikify-breadcrumbs-link')
       .text(title)
       .attr('href', path.resolve(path.sep, pagePath));
   } else {
-    return cheerio('<span>').addClass('wiki-breadcrumbs-static').text(title);
+    return cheerio('<span>').addClass('wikify-breadcrumbs-static').text(title);
   }
 }
 

@@ -22,7 +22,7 @@ class Wiki {
     const directoryIndex = new DirectoryIndex();
     const globOptions = {
       cwd: root,
-      ignore: ['node_modules/**/*.md', 'SUMMARY.md', '_index.md', '**/_index.md']
+      ignore: ['node_modules/**/*.md', 'SUMMARY.md', '**/_index.md']
     };
 
     return glob('**/*.md', globOptions)

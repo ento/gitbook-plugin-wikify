@@ -3,11 +3,8 @@
 const path = require('path');
 const testAnythingProtocol = require('test-anything-protocol');
 const textlintFormatter = require("textlint-formatter");
-const Promise = require('bluebird');
-const open = require('./asyncfs').open;
 const fs = require('./asyncfs').fs;
 
-const PageIndex = require('./page_index');
 const Breadcrumbs = require('./breadcrumbs');
 const DirectoryLinks = require('./directory_links');
 const PageLinks = require('./page_links');
@@ -23,8 +20,12 @@ const tapLogger = function(gitbookLogger) {
   })
 }
 
-const pages = new Set();
-const inboundLinks = {};
+// Why module-level: we need to keep track of book-global states
+// across multiple `page` hook calls.
+// Assuming a GitBook plugin is never reused to
+// process another book, module-level variables are acceptable.
+const paths = new Set();
+const inboundLinks = {}; // path => Set
 
 function addInboundLink(sourcePath, targetPath) {
   if (!inboundLinks.hasOwnProperty(targetPath)) {
@@ -33,8 +34,8 @@ function addInboundLink(sourcePath, targetPath) {
   inboundLinks[targetPath].add(sourcePath);
 }
 
-function processPageLinks(locationUtils, tap, readmePath, pages, page) {
-  const links = PageLinks.findGoodAndBadLinks(locationUtils, pages, page);
+function processPageLinks(locationUtils, tap, readmePath, paths, page) {
+  const links = PageLinks.findGoodAndBadLinks(locationUtils, paths, page);
   // for each link, add to target's inboundLinks
   links.good.forEach(targetPath => {
     if (targetPath === readmePath) {
@@ -51,23 +52,25 @@ function processPageLinks(locationUtils, tap, readmePath, pages, page) {
 }
 
 module.exports = {
-  // Map of hooks
   hooks: {
     init: function() {
+      // populate `paths`
       this.summary.walk(article => {
-        pages.add(article.path);
+        paths.add(article.path);
       });
     },
 
     "page": function(page) {
       const logger = this.log;
-      const readmePath = this.config.get('structure.readme');
       const tap = tapLogger(logger);
+      const readmePath = this.config.get('structure.readme');
 
       return loadLocationUtils(this.gitbook.version)
         .then(locationUtils => {
-          DirectoryLinks.rewrite(locationUtils, pages, page);
-          processPageLinks(locationUtils, tap, readmePath, pages, page);
+          // rewrite links to directories as links to their index pages.
+          DirectoryLinks.rewrite(locationUtils, paths, page);
+          // update inbound links and report broken links.
+          processPageLinks(locationUtils, tap, readmePath, paths, page);
           if (page.path !== readmePath) {
             Breadcrumbs.addBreadcrumbs(page, 'Top', readmePath);
           }
@@ -76,14 +79,15 @@ module.exports = {
     },
 
     "finish": function() {
-      // number of pages checked for broken links
+      // report number of pages checked for broken links as TAP test plan.
       const tap = tapLogger(this.log);
-      tap.plan(pages.size);
+      tap.plan(paths.size);
 
-      const lintOutputPath = this.config.get('pluginsConfig.gen-all.lintOutput')
+      // output orphans as violations.
+      const lintOutputPath = this.config.get('pluginsConfig.wikify.lintOutput')
       if (typeof lintOutputPath === 'string') {
         const readmePath = this.config.get('structure.readme');
-        const lintMessages = Array.from(pages).map(path => {
+        const lintMessages = Array.from(paths).map(path => {
           if (path === readmePath) return;
           const pageInbounds = inboundLinks[path];
           if (typeof pageInbounds === 'undefined' || pageInbounds.size === 0) {
