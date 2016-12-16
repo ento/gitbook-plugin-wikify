@@ -6,11 +6,12 @@
     "type": "git",
     "url": "https://github.com/ento/gitbook-plugin-wikify.git"
   },
-  "main": "index.js",
+  "main": "lib/index.js",
   "bin": {
     "gitbook-autoindex": "./bin/gitbook-autoindex.js"
   },
   "scripts": {
+    "lint": "eslint .",
     "test": "ava"
   },
   "engines": {
@@ -32,9 +33,12 @@
   },
   "devDependencies": {
     "ava": "^0.17.0",
+    "colors": "^1.0.3",
+    "eslint": "^3.12.2",
     "gitbook-tester": "ento/gitbook-tester#testing-external-command",
     "tap-parser": "^3.0.4",
     "unique-temp-dir": "^1.0.0",
+    "winston": "^2.3.0",
     "winston-memory": "^0.1.0"
   },
   "gitbook": {
@@ -42,7 +46,7 @@
       "lintOutput": {
         "type": "string",
         "default": null,
-        "description": ""
+        "description": "Output orphaned pages in jslint's XML format"
       }
     }
   }

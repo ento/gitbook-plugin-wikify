@@ -1,0 +1,21 @@
+sudo: false
+language: node_js
+cache:
+  directories:
+    - $HOME/.gitbook
+    - node_modules
+node_js:
+  # should match gitbook's node_js list
+  - "stable"
+  - "4.1"
+env:
+  - GITBOOK_VERSION=3.1.1
+  - GITBOOK_VERSION=
+before_install:
+  - npm install -g gitbook-cli
+  - gitbook fetch $GITBOOK_VERSION
+script:
+  - DEBUG=true npm test
+  - npm run lint
+notifications:
+  email: false
