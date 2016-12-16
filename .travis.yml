@@ -1,0 +1,10 @@
+sudo: false
+language: node_js
+node_js:
+  # should match gitbook's node_js list
+  - "stable"
+  - "4.1"
+before_script:
+  - gitbook install
+after_success:
+  - npm run lint
