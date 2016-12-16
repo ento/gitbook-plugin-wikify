@@ -8,7 +8,7 @@ const color = require('bash-color');
 
 const manager = require('gitbook-cli/lib');
 const commands = require('gitbook-cli/lib/commands');
-const autoindex = require('../autoindex');
+const autoindex = require('../lib/autoindex');
 
 const runPromise = (p) => {
   return p
