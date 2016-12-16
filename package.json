@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/ento/gitbook-plugin-wikify.git"
   },
-  "main": "index.js",
+  "main": "lib/index.js",
   "bin": {
     "gitbook-autoindex": "./bin/gitbook-autoindex.js"
   },
@@ -42,7 +42,7 @@
       "lintOutput": {
         "type": "string",
         "default": null,
-        "description": ""
+        "description": "Output orphaned pages in jslint's XML format"
       }
     }
   }
