@@ -12,3 +12,5 @@ before_install:
   - gitbook fetch $GITBOOK_VERSION
 after_success:
   - npm run lint
+notifications:
+  email: false
