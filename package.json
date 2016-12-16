@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "ava": "^0.17.0",
+    "colors": "^1.0.3",
     "eslint": "2.10.2",
     "gitbook-tester": "ento/gitbook-tester#testing-external-command",
     "tap-parser": "^3.0.4",
