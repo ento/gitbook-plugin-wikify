@@ -7,9 +7,9 @@ const yargs = require('yargs');
 const color = require('bash-color');
 
 const manager = require('gitbook-cli/lib');
-const commands = require('gitbook-cli/lib/commands');
 const autoindex = require('../lib/autoindex');
 
+/* eslint-disable no-console */
 const runPromise = (p) => {
   return p
     .then(() => {
@@ -17,10 +17,11 @@ const runPromise = (p) => {
     }, (err) => {
       console.log('');
       console.log(color.red(err.toString()));
-      if (program.debug || process.env.DEBUG) console.log(err.stack || '');
+      if (process.env.DEBUG) console.log(err.stack || '');
       process.exit(1);
     });
-}
+};
+/* eslint-enable no-console */
 
 const main = (argv) => {
   const bookRoot = path.resolve(argv._[0] || process.cwd());
@@ -42,7 +43,7 @@ const main = (argv) => {
           });
       })
   );
-}
+};
 
 // Init gitbook-cli
 manager.init();
