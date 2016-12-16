@@ -52,7 +52,7 @@ $ cat .bookignore
 ### Directory Index
 
 The automatically generated index page is pretty bare-bones. If you want to use
-your own index, create a `index.md` file under the directory and it will be
+your own index, create an `index.md` file under the directory and it will be
 copied as-is.
 
 Any link to a directory will be rewritten as a link to `<dir>/_index.md`.
@@ -90,7 +90,7 @@ Orphaned pages are reported in the `lintOutput` file, if specified, in jslint's 
 <?xml version="1.0" encoding="utf-8"?>
 <jslint>
   <file name="learning.md">
-    <issue line="1" char="1" evidence="learning.md" reason="orphaned" />
+    <issue line="1" char="1" evidence="learning.md" reason="weak discoverability: no page links to this page" />
   </file>
 </jslint>
 ```
