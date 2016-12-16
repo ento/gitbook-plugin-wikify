@@ -11,6 +11,7 @@
     "gitbook-autoindex": "./bin/gitbook-autoindex.js"
   },
   "scripts": {
+    "lint": "eslint .",
     "test": "ava"
   },
   "engines": {
