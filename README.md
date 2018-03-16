@@ -41,21 +41,19 @@ they're properly included in the book:
 
 ```sh
 $ cat .gitignore
-_index.md
 SUMMARY.md
 
 $ cat .bookignore
-!_index.md
 !SUMMARY.md
 ```
 
 ### Directory Index
 
 The automatically generated index page is pretty bare-bones. If you want to use
-your own index, create an `index.md` file under the directory and it will be
+your own index, create a `README.md` file under the directory and it will be
 copied as-is.
 
-Any link to a directory will be rewritten as a link to `<dir>/_index.md`.
+Any link to a directory will be rewritten as a link to `<dir>/README.md`.
 
 
 ### Breadcrumbs
@@ -66,7 +64,7 @@ Breadcrumbs will have this HTML structure:
 <nav class="wikify-breadcrumbs">
   <a class="wikify-breadcrumbs-link" href="../">Top</a>
   <span class="wikify-breadcrumbs-sep"> &gt; </span>
-  <a class="wikify-breadcrumbs-link" href="_index.html">network</a>
+  <a class="wikify-breadcrumbs-link" href="README.html">network</a>
   <span class="wikify-breadcrumbs-sep"> &gt; </span>
   <span class="wikify-breadcrumbs-static">router.md</span>
 </nav>
