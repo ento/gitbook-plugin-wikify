@@ -34,7 +34,7 @@
     "yargs": "^6.4.0"
   },
   "devDependencies": {
-    "ava": "^0.17.0",
+    "ava": "^1.0.0-beta.3",
     "colors": "^1.0.3",
     "eslint": "^3.12.2",
     "gitbook-tester": "ento/gitbook-tester#testing-external-command",
