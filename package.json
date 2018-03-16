@@ -20,15 +20,17 @@
   "author": "Marica Odagaki",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "@textlint/linter-formatter": "^3.0.4",
     "bash-color": "0.0.4",
     "bluebird": "^3.4.6",
     "cheerio": "^0.22.0",
     "fs-extra": "^1.0.0",
     "gitbook-cli": "^2.3.0",
     "glob": "^7.1.1",
+    "interop-require": "^1.0.0",
+    "is-file": "^1.0.0",
     "lodash": "^4.17.2",
-    "test-anything-protocol": "^0.1.0",
-    "textlint-formatter": "^1.8.0",
+    "test-anything-protocol": "^0.2.1",
     "yargs": "^6.4.0"
   },
   "devDependencies": {
