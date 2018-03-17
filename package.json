@@ -30,6 +30,7 @@
     "interop-require": "^1.0.0",
     "is-file": "^1.0.0",
     "lodash": "^4.17.2",
+    "minimatch": "^3.0.4",
     "test-anything-protocol": "^0.2.1",
     "yargs": "^6.4.0"
   },
@@ -49,6 +50,12 @@
         "type": "string",
         "default": null,
         "description": "Output orphaned pages in jslint's XML format"
+      },
+      "lintExcludePatterns": {
+        "type": "array",
+        "items": {"type": "string"},
+        "default": [],
+        "description": "Glob patterns to exclude when checking orphans"
       }
     }
   }
