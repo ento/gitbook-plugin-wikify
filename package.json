@@ -56,6 +56,11 @@
         "items": {"type": "string"},
         "default": [],
         "description": "Glob patterns to exclude when checking orphans"
+      },
+      "lintMessageNoInboundLink": {
+        "type": "string",
+        "default": "weak discoverability: no page links to this page",
+        "description": "jslint message field value when there's no inbound link"
       }
     }
   }
